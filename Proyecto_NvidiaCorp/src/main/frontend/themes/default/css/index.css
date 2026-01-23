@@ -1,0 +1,174 @@
+html, body {
+  width: 100%;
+  overflow-x: hidden !important;
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: inherit;
+}
+
+.nvidia-navbar {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #fff;
+  padding: 0.5rem 2.5rem;
+  box-shadow: 0 2px 12px #00000010;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 10;
+  height: 64px;
+}
+
+.nvidia-navbar-logo .nvidia-logo {
+  height: 38px;
+}
+
+.nvidia-navbar-actions {
+  display: flex;
+  align-items: center;
+}
+
+.nvidia-navbar-btn {
+  font-family: inherit;
+}
+
+.main-nvidia {
+  height: 100vh; 
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center; 
+  background: linear-gradient(135deg, #0f0f0f 80%, #76b900 100%);
+  padding: 0;
+  overflow: hidden; 
+}
+
+.nvidia-card {
+  background: rgba(20, 20, 20, 0.95);
+  padding: 3rem 4rem;
+  border-radius: 24px;
+  box-shadow: 0 8px 32px 0 rgba(34, 255, 0, 0.15);
+  text-align: center;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4rem; 
+}
+
+.nvidia-title {
+  color: #76b900;
+  font-size: 2.8rem;
+  margin-bottom: 0.5rem; 
+  letter-spacing: 2px;
+  font-weight: 900;
+  text-shadow: 0 2px 8px #000;
+}
+
+.nvidia-desc {
+  color: #fff;
+  font-size: 1.2rem;
+  margin: 0; 
+}
+
+.sobre-nosotros-section {
+  margin: 60px auto 0 auto;
+  max-width: 900px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px #0001;
+  padding: 2rem 2.5rem;
+}
+
+.integrantes-section {
+  margin: 40px auto 0 auto;
+  max-width: 900px;
+  background: #f7f7f7;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px #0001;
+  padding: 2rem 2.5rem;
+}
+
+.integrantes-list {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 1.5rem;
+}
+
+.integrante-card {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 1px 6px #0002;
+  padding: 1.2rem 1.5rem;
+  text-align: center;
+  width: 220px;
+}
+
+.integrante-card img {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 0.7rem;
+}
+
+.producto-card {
+  background: #111;
+  border-radius: 18px;
+  border: 2px solid #76b900;
+  box-shadow: 0 4px 24px #76b90022;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin: 2rem auto 1.5rem auto;
+  width: 100%;
+  max-width: 480px;
+  min-height: 180px;
+  height: 220px; 
+  overflow: hidden;
+}
+
+.producto-imagen {
+  width: 100%;
+  max-width: 600px;
+  height: auto;
+  object-fit: contain;
+  background: #111;
+  display: block;
+  margin: 0 auto;
+}
+
+/* Limita el tamaño del overlay de ComboBox y Select */
+vaadin-combo-box-overlay,
+vaadin-select-overlay {
+  max-height: 260px !important;
+  min-width: 180px !important;
+  width: auto !important;
+  border-radius: 12px !important;
+  background: #232323 !important;
+  color: #b3ff00 !important;
+  overflow-y: auto !important;
+}
+
+/* Opciones compactas */
+vaadin-combo-box-item,
+vaadin-select-item {
+  min-height: 36px !important;
+  font-size: 1rem !important;
+  color: #b3ff00 !important;
+  background: #232323 !important;
+}

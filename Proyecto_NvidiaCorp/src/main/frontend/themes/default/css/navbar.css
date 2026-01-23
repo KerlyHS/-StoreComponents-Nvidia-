@@ -1,0 +1,111 @@
+.navbar {
+  width: 100%;
+  height: 56px;
+  background: #fff;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2.5rem;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 100;
+  box-shadow: 0 2px 8px #0001;
+}
+
+.navbar-left {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+
+.navbar-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.navbar-logo img {
+  height: 32px;
+  width: 4;
+}
+
+.navbar-title {
+  font-weight: bold;
+  font-size: 1.3rem;
+  color: #222;
+  letter-spacing: 1px;
+}
+
+.navbar-link {
+  color: #222;
+  font-size: 1.05rem;
+  cursor: pointer;
+  transition: color 0.2s;
+  font-weight: 500;
+  margin-left: 1.2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.navbar-link:last-child {
+  margin-right: 5rem;
+}
+
+.navbar-link:hover {
+  color: #76b900;
+}
+
+.navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.fas.fa-shopping-cart {
+  font-size: 1.3rem;
+}
+
+.navbar-user-menu {
+  position: relative;
+  display: inline-block;
+}
+
+.navbar-user-dropdown {
+  position: absolute;
+  right: 0;
+  top: 2.2rem;
+  background: #232323;
+  color: #e6e6e6;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px #76b90033;
+  padding: 1rem 1.5rem;
+  min-width: 200px;
+  z-index: 100;
+  text-align: left;
+  animation: fadeIn 0.2s;
+}
+
+.navbar-user-dropdown div {
+  margin-bottom: 0.5rem;
+}
+
+.navbar-logout-btn {
+  background: linear-gradient(90deg, #76b900 60%, #b3ff00 100%);
+  color: #232323;
+  border: none;
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  width: 100%;
+  margin-top: 0.5rem;
+  transition: background 0.2s, color 0.2s;
+}
+.navbar-logout-btn:hover {
+  background: linear-gradient(90deg, #b3ff00 60%, #76b900 100%);
+  color: #181818;
+}

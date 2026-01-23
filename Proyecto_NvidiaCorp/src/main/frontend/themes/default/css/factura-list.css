@@ -1,0 +1,254 @@
+/* Fondo general */
+.factura-main {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0b0b0b 80%, #76b900 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 0;
+}
+
+.factura-panel {
+  background: #060606;
+  border-radius: 70px;
+  box-shadow: 0 8px 32px #cdbfbf55;
+  padding: 2.5rem 2.5rem 2rem 2.5rem;
+  max-width: 1000px;
+  width: 100%;
+  margin: 10 auto;
+  color: #0b0b0b;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.factura-title {
+  color: #76b900;
+  font-size: 2.3rem;
+  font-weight: 900;
+  letter-spacing: 2px;
+  text-shadow: 0 2px 8px #00000022;
+  margin-bottom: 1.5rem;
+  text-align: left;
+}
+
+.factura-card {
+  background: #060606;
+  border-radius: 20px;
+  box-shadow: 2px 8px #060606;
+  padding: 2rem 1rem;
+  margin-bottom: 1.5rem;
+  width: 100%;
+  color: #0b0b0b; /* ✅ Cambiado a color legible */
+}
+
+.factura-card h3 {
+  color: #b3ff00;
+  margin-top: 0;
+  margin-bottom: 1rem;
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+/* ✅ ESTILOS CORREGIDOS PARA CAMPOS DE ENTRADA */
+vaadin-text-field,
+vaadin-combo-box {
+  --vaadin-input-field-background-color: #2a2a2a;
+  --vaadin-input-field-value-color: #ffffff;
+  --vaadin-input-field-label-color: #b3ff00;
+  --vaadin-input-field-border-color: #76b900;
+  --vaadin-input-field-hover-border-color: #b3ff00;
+  --vaadin-input-field-focus-border-color: #b3ff00;
+  --vaadin-input-field-placeholder-color: #cccccc;
+}
+
+/* Grid de productos */
+.factura-grid {
+  background: #454343;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px #f2f8e833;
+  padding: 1rem 0.5rem;
+  color: #151515;
+  margin-bottom: 0;
+  width: 100%;        
+  max-width: 100%;     
+  min-width: 0;       
+}
+
+vaadin-grid {
+  background: transparent !important;
+  --vaadin-grid-background: transparent;
+  --vaadin-grid-cell-background: transparent;
+  --vaadin-grid-row-background: transparent;
+  --vaadin-grid-header-background: #181818;
+  --vaadin-grid-footer-background: #181818;
+  color: #b3ff00;
+  border-radius: 12px;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+vaadin-grid-cell-content {
+  background: transparent !important;
+  color: #b3ff00;
+  font-weight: 500;
+  font-size: 1.08rem;
+  letter-spacing: 0.01em;
+}
+
+vaadin-grid-header-cell {
+  background: #181818 !important;
+  color: #76b900 !important;
+  font-weight: bold;
+  font-size: 1.13rem;
+  border-bottom: 2px solid #353c2844 !important;
+}
+
+vaadin-grid::part(row) {
+  border-bottom: 1px solid #868a7e22;
+}
+
+vaadin-grid::part(row):hover {
+  background: #232323 !important;
+  transition: background 0.2s;
+}
+
+/* Resumen de totales */
+.factura-totales {
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+  padding: 1.2em 2em;
+  border: 2px solid #080808;
+  border-radius: 12px;
+  background: #232323;
+  min-width: 250px;
+  color: #f1eaea;
+  font-size: 1.15rem;
+  box-shadow: 0 2px 8px #04040400;
+}
+
+.factura-totales strong {
+  color: #9fdf09;
+}
+
+/* Botones */
+.factura-btn-primary {
+  background: linear-gradient(90deg, #76b900 60%, #b3ff00 100%) !important;
+  color: #f7e8e8 !important;
+  font-weight: bold !important;
+  border-radius: 8px !important;
+  border: none !important;
+  padding: 0.5rem 1.5rem !important;
+  font-size: 1.1rem !important;
+  box-shadow: 0 2px 8px #10110e44;
+}
+
+.factura-btn-secondary {
+  background: #404f47 !important;
+  color: #76b900 !important;
+  font-weight: bold !important;
+  border-radius: 8px !important;
+  border: 2px solid #76b900 !important;
+  padding: 0.5rem 1.5rem !important;
+  font-size: 1.1rem !important;
+}
+
+/* Inputs */
+.factura-input {
+  background: #e9e4e4 !important;
+  border-radius: 8px !important;
+  border: 2px solid #76b900 !important;
+  color: #d4caca !important;
+  font-weight: bold;
+  min-width: 160px;
+  margin-right: 1rem;
+}
+
+/* Productos y totales */
+.factura-productos-totales {
+  display: flex;
+  align-items: flex-start;
+  gap: 2.5rem;
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+/* Nueva sección para el grid y totales */
+.factura-grid-container {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.factura-grid {
+  border-collapse: collapse;
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+.factura-grid th,
+.factura-grid td {
+  padding: 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid #76b90022;
+}
+
+.factura-grid th {
+  background: #dcd2d2;
+  color: #76b900;
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+.factura-grid td {
+  background: #ebdede;
+  color: #b3ff00;
+  font-size: 1rem;
+}
+
+/* Estilos para impresión */
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+  .factura-print-area, .factura-print-area * {
+    visibility: visible !important;
+  }
+  .factura-print-area {
+    position: absolute !important;
+    left: 0;
+    top: 0;
+    width: 100vw !important;
+    background: #100f0f !important;
+    color: #000 !important;
+    box-shadow: none !important;
+    padding: 2rem !important;
+  }
+  .factura-btn-primary,
+  .factura-btn-secondary,
+  nav,
+  .main-menu,
+  .vaadin-app-layout,
+  .vaadin-side-nav {
+    display: none !important;
+  }
+  .factura-card,
+  .factura-totales {
+    background: #0d0c0c !important;
+    color: #000 !important;
+    box-shadow: none !important;
+    border-color: #76b900 !important;
+  }
+  .factura-title {
+    color: #76b900 !important;
+    text-shadow: none !important;
+  }
+  .factura-grid th {
+    background: #0b0b0b !important;
+    color: #76b900 !important;
+  }
+  .factura-grid td {
+    background: #0a0404 !important;
+    color: #222 !important;
+  }
+}
