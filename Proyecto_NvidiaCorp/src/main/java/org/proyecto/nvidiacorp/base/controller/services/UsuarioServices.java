@@ -1,344 +1,235 @@
 package org.proyecto.nvidiacorp.base.controller.services;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
-import org.proyecto.nvidiacorp.base.controller.Utiles;
-import org.proyecto.nvidiacorp.base.controller.DataEstruct.List.LinkedList;
-import org.proyecto.nvidiacorp.base.controller.dao.AdapterDao;
-import org.proyecto.nvidiacorp.base.controller.dao.Dao_Models.DaoPersona;
-import org.proyecto.nvidiacorp.base.controller.dao.Dao_Models.DaoRol;
-import org.proyecto.nvidiacorp.base.controller.dao.Dao_Models.DaoUsuario;
-import org.proyecto.nvidiacorp.base.models.Persona;
+import jakarta.annotation.security.RolesAllowed; // <--- NUEVO IMPORT NECESARIO
+
 import org.proyecto.nvidiacorp.base.models.Rol;
-import org.proyecto.nvidiacorp.base.models.RolEnum;
 import org.proyecto.nvidiacorp.base.models.Usuario;
+import org.proyecto.nvidiacorp.base.repositories.PersonaRepository;
+import org.proyecto.nvidiacorp.base.repositories.RolRepository;
+import org.proyecto.nvidiacorp.base.repositories.UsuarioRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
+import org.springframework.stereotype.Service;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 
 import com.vaadin.flow.server.auth.AnonymousAllowed;
 import com.vaadin.hilla.BrowserCallable;
 
-import jakarta.annotation.security.PermitAll;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
-
 @BrowserCallable
-@AnonymousAllowed
+@Service
+// ¡YA NO ESTÁ @AnonymousAllowed AQUÍ ARRIBA!
 public class UsuarioServices {
-    private SecurityContext context;
-    private DaoUsuario du;
-    
-    public UsuarioServices(){
-        du = new DaoUsuario();
-        context = SecurityContextHolder.getContext();
-    }
 
-    @PermitAll // Solo usuarios autenticados
-    public String getCurrentUserRole() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        return auth.getAuthorities().stream()
-            .findFirst()
-            .map(GrantedAuthority::getAuthority)
-            .orElse("ROLE_GUEST");
-    }
+    @Autowired
+    private UsuarioRepository usuarioRepository;
+    @Autowired
+    private PersonaRepository personaRepository;
+    @Autowired
+    private RolRepository rolRepository;
 
-    public Map<String, Object> getCurrentUser() throws Exception {
-    Utiles util = new Utiles();
-    Map<String, Object> response = new HashMap<>();
-    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-    System.out.println("AUTH: " + auth);
-    if (auth != null) {
-    System.out.println("AUTH CLASS: " + auth.getClass().getName());
-    System.out.println("isAuthenticated: " + auth.isAuthenticated());
-    System.out.println("Principal: " + auth.getPrincipal());
-    System.out.println("Name: " + auth.getName());
-}
+    // --- MÉTODOS PÚBLICOS (ACCESIBLES PARA TODOS) ---
 
-    if (auth == null || !auth.isAuthenticated() || auth.getName() == null) {
-        response.put("success", false);
-    response.put("message", "No autenticado");
-    response.put("correo", null);
-    response.put("id", null);
-    response.put("Rol", null);
-    return response;
-    }
-    String correoBuscado = auth.getName();
-
-
-    try {
-
-        System.out.println("Buscando usuario con correo: " + correoBuscado); 
-        
-        LinkedList<Usuario> todosUsuarios = du.listAll();
-        System.out.println("Total usuarios: " + todosUsuarios.getLength()); 
-        
-        DaoPersona dp = new DaoPersona();
-        DaoRol dr = new DaoRol();
-        HashMap<String , AdapterDao> daos = new HashMap<>();
-        daos.put("Persona", dp);
-        daos.put("Rol", dr);
-        HashMap<String ,Object> [] array =  util.getHasMap("nombre",util.getAtributos(du.getUsuario()), du.listAll().quickSort("correo", 1, daos).toArray(), daos).toArray();
-        LinkedList<HashMap<String,Object>> users = util.searchL("correo", correoBuscado, null);
-        HashMap<String ,Object> usuarioEncontrado = du.login(users.get(0).get("correo").toString(), users.get(0).get("clave").toString());
-        /* for (Usuario u : todosUsuarios.toArray()) {
-            System.out.println("Comparando con: " + u.getCorreo()); 
-            if (correoBuscado.equalsIgnoreCase(u.getCorreo())) {
-                usuarioEncontrado = u;
-                break;
-            }
-        } */
-
-        if (usuarioEncontrado == null) {
-            System.out.println("Usuario no encontrado en la lista de usuarios"); 
-            response.put("success", false);
-            response.put("message", "Usuario no registrado en la lista de usuarios");
-            return response;
-        }
-
-        response.put("success", true);
-        response.put("correo", usuarioEncontrado.get("correo"));
-        response.put("id", usuarioEncontrado.get("id"));
-        response.put("estado", usuarioEncontrado.get("estado"));
-
-        Persona persona = new DaoPersona().get((Integer) usuarioEncontrado.get("id_Persona"));
-        if (persona != null) {
-            response.put("Persona", persona.getNombre());
-        }
-
-        Rol rol = new DaoRol().get((Integer) usuarioEncontrado.get("id_Rol"));
-        if (rol != null) {
-            response.put("Rol", rol.getNombre());
-        }
-
-    } catch (Exception e) {
-        System.err.println("Error en getCurrentUser: " + e.getMessage());
-        e.printStackTrace();
-        response.put("success", false);
-        response.put("message", "Error del servidor: " + e.getMessage());
-    }
-    return response;
-    }
-
-
-    public HashMap<String, String> createRoles(){
-        HashMap<String,String> map = new HashMap<>();
-        map.put("resp", "Ya creado");
-        map.put("code", "201");
-        DaoRol rol = new DaoRol();
-        if(rol.listAll().isEmpty()){
-            rol.getrol().setNombre("ADMIN");
-            rol.save();
-            rol.setrol(null);
-            rol.getrol().setNombre("CLIENTE");
-            rol.save();
-            rol.setrol(null);
-            map.put("resp", "Creado");
-            map.put("code", "200");
-        }
-        return map;
-    }
-
-    public Authentication getAtentication(){
-        System.out.println("INDENTIQUESE CTM >:!");
-        System.out.println(context.getAuthentication());
-        System.out.println("-------------------------");
-        return context.getAuthentication();
-    }
-
-    public Boolean isLogin(){
-        if(getAtentication() != null){
-            return getAtentication().isAuthenticated();
-        }
-        return false;
-    }
-
-    public List<Usuario> listUsers(){
-        return Arrays.asList(du.listAll().toArray());
-    }
-
-    public HashMap<String , Object> login (@NotEmpty @NotBlank String correo, @NotEmpty @NotBlank String clave) throws Exception{
-        HashMap<String ,Object> obj = new HashMap<>();
+    @AnonymousAllowed
+    public HashMap<String, Object> login(String correo, String clave) {
+        HashMap<String, Object> response = new HashMap<>();
         try {
-            HashMap<String ,Object> aux = du.login(correo, clave);
-            if(aux != null) {
-                context.setAuthentication(
-                    new UsernamePasswordAuthenticationToken(aux.get("correo").toString(), 
-                        aux.get("id").toString(),getAuthorities(aux))
-                        );
-                obj.put("success", true);
-                obj.put("message", "OK");
-                obj.put("user",aux);
+            Optional<Usuario> userOpt = usuarioRepository.findByCorreo(correo);
+
+            if (userOpt.isPresent()) {
+                Usuario u = userOpt.get();
+                if (u.getClave() != null && u.getClave().equals(clave)) {
+
+                    if (u.getEstado() != null && !u.getEstado()) {
+                        throw new Exception("Usuario inactivo");
+                    }
+
+                    String rolNombre = "USER";
+                    if (u.getId_Rol() != null) {
+                        Optional<Rol> rolOpt = rolRepository.findById(u.getId_Rol());
+                        if (rolOpt.isPresent())
+                            rolNombre = rolOpt.get().getNombre();
+                    }
+
+                    List<GrantedAuthority> authorities = new ArrayList<>();
+                    authorities.add(new SimpleGrantedAuthority("ROLE_" + rolNombre));
+
+                    Authentication auth = new UsernamePasswordAuthenticationToken(u.getCorreo(), u.getId(), authorities);
+
+                    SecurityContext sc = SecurityContextHolder.getContext();
+                    sc.setAuthentication(auth);
+
+                    ServletRequestAttributes attr = (ServletRequestAttributes) RequestContextHolder.currentRequestAttributes();
+                    HttpServletRequest request = attr.getRequest();
+                    HttpSession session = request.getSession(true);
+                    session.setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, sc);
+
+                    response.put("success", true);
+                    response.put("message", "OK");
+                    response.put("user", u);
+                    response.put("rol", rolNombre);
+                } else {
+                    throw new Exception("Contraseña incorrecta");
+                }
+            } else {
+                throw new Exception("Usuario no encontrado");
             }
         } catch (Exception e) {
-            obj.put("success", false);
-            obj.put("message", "Usuario inexistente o credenciales incorrectas");
-            obj.put("user", null);
-            context.setAuthentication(null);
-            System.out.println(e);
-
+            response.put("success", false);
+            response.put("message", e.getMessage());
+            SecurityContextHolder.clearContext();
         }
-        System.out.println(obj);
-        return obj;
+        return response;
     }
 
-    public HashMap<String,String> viewRol(){
-        HashMap<String,String> map = new HashMap<>();
-        if(context.getAuthentication()!= null){
-            Object[] obj =context.getAuthentication().getAuthorities().toArray();
-            map.put("rol",obj[0].toString());
-
+    @AnonymousAllowed
+    public boolean isLogin() {
+        try {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            return auth != null && auth.isAuthenticated() && !auth.getPrincipal().equals("anonymousUser");
+        } catch (Exception e) {
+            return false;
         }
-        return map;
     }
 
-    public HashMap<String, Object>logout(){
-        context.setAuthentication(null);
+    @AnonymousAllowed
+    public HashMap<String, Object> logout() {
+        SecurityContextHolder.clearContext();
+        try {
+            ServletRequestAttributes attr = (ServletRequestAttributes) RequestContextHolder.currentRequestAttributes();
+            HttpSession session = attr.getRequest().getSession(false);
+            if (session != null) {
+                session.invalidate();
+            }
+        } catch (Exception e) {
+            // Ignorar
+        }
         HashMap<String, Object> aux = new HashMap<>();
         aux.put("mensaje", "OK");
         return aux;
     }
 
-    public static List<GrantedAuthority> getAuthorities(HashMap<String , Object> obj)throws Exception{
-        DaoRol dr = new DaoRol();
-        dr.setrol(dr.listAll().getId(Integer.parseInt(obj.get("Rol").toString())));
-        List<GrantedAuthority> li = new ArrayList<>();
-        li.add(new SimpleGrantedAuthority("ROLE_"+ dr.getrol().getNombre()));
-        return li;
+    @AnonymousAllowed
+    public HashMap<String, Object> checkSession() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        HashMap<String, Object> response = new HashMap<>();
+
+        if (auth != null && auth.isAuthenticated() && !auth.getPrincipal().equals("anonymousUser")) {
+            response.put("isAuthenticated", true);
+            response.put("username", auth.getName());
+            List<String> roles = auth.getAuthorities().stream()
+                    .map(GrantedAuthority::getAuthority)
+                    .collect(Collectors.toList());
+            response.put("roles", roles);
+        } else {
+            response.put("isAuthenticated", false);
+            response.put("roles", new ArrayList<>());
+        }
+        return response;
+    }
+    
+    // Dejamos esto público por si usas un formulario de registro abierto
+    @AnonymousAllowed 
+    public void createUser(String correo, String clave, Boolean estado, Integer id_rol, Integer id_persona) {
+        Usuario nuevo = new Usuario();
+        nuevo.setCorreo(correo);
+        nuevo.setClave(clave);
+        nuevo.setEstado(estado);
+        nuevo.setId_Rol(id_rol);
+        nuevo.setId_Persona(id_persona);
+        usuarioRepository.save(nuevo);
+    }
+    
+    // Métodos auxiliares para combos (públicos para no romper UI)
+    @AnonymousAllowed
+    public List<HashMap<String, Object>> listPersonaCombo() {
+        return personaRepository.findAll().stream().map(p -> {
+            HashMap<String, Object> map = new HashMap<>();
+            map.put("value", p.getId().toString());
+            map.put("label", p.getNombre() + " " + (p.getApellido() != null ? p.getApellido() : ""));
+            return map;
+        }).collect(Collectors.toList());
     }
 
-    public static void main(String[] args) throws Exception {
-        UsuarioServices usr = new UsuarioServices();
-       System.out.println( usr.login("Ras77@unl.com", "cigarro"));
+    @AnonymousAllowed
+    public List<HashMap<String, Object>> listRol() {
+        return rolRepository.findAll().stream().map(r -> {
+            HashMap<String, Object> map = new HashMap<>();
+            map.put("value", r.getId());
+            map.put("label", r.getNombre());
+            return map;
+        }).collect(Collectors.toList());
     }
 
+    @AnonymousAllowed
+    public org.proyecto.nvidiacorp.base.models.Persona getPersonaLogueada() {
+        SecurityContext context = SecurityContextHolder.getContext();
+        Authentication auth = context.getAuthentication();
 
-    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-//Modulo de clientes
-     public void create(@NotEmpty String correo, @NotEmpty String clave, Boolean estado, Integer id_Persona,
-            Integer id_rol) throws Exception {
-        if (correo.trim().length() > 0 && clave.trim().length() > 0 && estado != null && id_Persona > 0
-                && id_rol!=null) {
-            du.getUsuario().setCorreo(correo);
-            du.getUsuario().setClave(clave);
-            du.getUsuario().setEstado(estado);
-            du.getUsuario().setId_Persona(id_Persona);
-            du.getUsuario().setId_Rol(id_rol);
-            if (!du.save()) {
-                throw new Exception("Error al guardar datos");
+        if (auth != null && auth.isAuthenticated()) {
+            String correo = auth.getName();
+            Optional<Usuario> user = usuarioRepository.findByCorreo(correo);
+            if (user.isPresent() && user.get().getId_Persona() != null) {
+                return personaRepository.findById(user.get().getId_Persona()).orElse(null);
             }
         }
-    } 
+        return null;
+    }
 
-    public void createUser(@NotEmpty @NotBlank String correo, 
-                              @NotEmpty @NotBlank String clave,
-                              Boolean estado,
-                              @NotNull Integer id_rol,
-                              @NotNull Integer id_persona) throws Exception{
-        if (correo.trim().length() > 0 && clave != null && estado ==true 
-        && id_rol != null && id_persona!= null && id_persona >0 ) {
-            du.getUsuario().setCorreo(correo);
-            du.getUsuario().setClave(clave);;
-            du.getUsuario().setEstado(estado);;
-            du.getUsuario().setId_Rol(id_rol);
-            du.getUsuario().setId_Persona(id_persona);
-            if(du.save()){
-             System.out.println("aaaaaaa guardado");
-            } else {
-                System.out.println("no se guardo");
+    // --- MÉTODOS RESTRINGIDOS (SOLO ADMIN) ---
+    // Aquí es donde cerramos la puerta para que el CLIENTE no vea la lista
+
+    @RolesAllowed("ADMIN") 
+    public List<HashMap<String, String>> listUsuario() {
+        List<HashMap<String, String>> lista = new ArrayList<>();
+        List<Usuario> usuariosBD = usuarioRepository.findAll();
+
+        for (Usuario u : usuariosBD) {
+            HashMap<String, String> map = new HashMap<>();
+            map.put("id", u.getId().toString());
+            map.put("correo", u.getCorreo());
+            map.put("estado", u.getEstado() != null ? u.getEstado().toString() : "false");
+
+            if (u.getId_Persona() != null) {
+                personaRepository.findById(u.getId_Persona()).ifPresent(p -> map.put("persona",
+                        p.getNombre() + " " + (p.getApellido() != null ? p.getApellido() : "")));
+                map.put("id_persona", u.getId_Persona().toString());
             }
-        }
-    }
 
-    public void update(Integer id, @NotEmpty String correo, @NotEmpty String clave, Boolean estado, Integer id_Persona,
-             Integer id_rol) throws Exception {
-        if (correo.trim().length() > 0 && clave.trim().length() > 0 && estado != null && id_Persona > 0
-                && id_rol != null) {
-            du.setUsuario(du.listAll().get(id - 1));
-            du.getUsuario().setCorreo(correo);
-            du.getUsuario().setClave(clave);
-            du.getUsuario().setEstado(estado);
-            du.getUsuario().setId_Persona(id_Persona);
-            //du.getUsuario().setRol(RolEnum.valueOf(rol));
-            du.getUsuario().setId_Rol(id_rol);
-            if (!du.save()) {
-                throw new Exception("Error al actualizar");
+            if (u.getId_Rol() != null) {
+                rolRepository.findById(u.getId_Rol()).ifPresent(r -> map.put("rol", r.getNombre()));
+                map.put("id_rol", u.getId_Rol().toString());
             }
-        }
-    }
-
-    public List<Usuario> listAllUsuario() {
-        return Arrays.asList(du.listAll().toArray());
-    }
-
-    public List<HashMap<String, Integer>> listRol() {
-        DaoRol dr = new DaoRol();
-        List<HashMap<String, Integer>> lista = new ArrayList<>();
-        for (Rol rol : dr.listAll().toArray()) {
-            HashMap<String, Integer> aux = new HashMap<>();
-            lista.add(aux);
+            lista.add(map);
         }
         return lista;
     }
 
-    public List<HashMap> listPersonaCombo() {
-        List<HashMap> lista = new ArrayList<>();
-        DaoPersona dp = new DaoPersona();
-        if (!dp.listAll().isEmpty()) {
-            Persona[] arreglo = dp.listAll().toArray();
-            for (int i = 0; i < arreglo.length; i++) {
-                HashMap<String, String> aux = new HashMap<>();
-                aux.put("value", arreglo[i].getId().toString());
-                aux.put("label", arreglo[i].getNombre() + " (" + arreglo[i].getCodIdent() + ")");
-                lista.add(aux);
-            }
-        }
-        return lista;
-    }
-
-    public List<HashMap> listRolCombo() {
-        List<HashMap> lista = new ArrayList<>();
-        for (RolEnum rol : RolEnum.values()) {
-            HashMap<String, String> aux = new HashMap<>();
-            aux.put("value", rol.toString());
-            aux.put("label", rol.toString());
-            lista.add(aux);
-        }
-        return lista;
-    }
-
-    public List<HashMap> listUsuario()  throws Exception{
-        List<HashMap> lista = new ArrayList<>();
-        DaoRol dao = new DaoRol();
-        if (!du.listAll().isEmpty()) {
-            Usuario[] arreglo = du.listAll().toArray();
-            for (int i = 0; i < arreglo.length; i++) {
-                HashMap<String, String> aux = new HashMap<>();
-                Persona persona = new DaoPersona().listAll().get(arreglo[i].getId_Persona() - 1);
-                aux.put("id", arreglo[i].getId().toString(i));
-                aux.put("correo", arreglo[i].getCorreo().toString());
-                aux.put("clave", arreglo[i].getClave().toString());
-                aux.put("estado", arreglo[i].getEstado().toString());
-                aux.put("persona", persona.getNombre() + " " + persona.getApellido());
-                aux.put("codIdent",
-                        new DaoPersona().listAll().get(arreglo[i].getId_Persona() - 1).getCodIdent());
-                aux.put("id_persona",
-                        new DaoPersona().listAll().get(arreglo[i].getId_Persona() - 1).getId().toString());
-                //aux.put("rol", arreglo[i].getRol().toString());
-                aux.put("rol", dao.listAll().getDataId(arreglo[i].getId_Rol()).getNombre());
-                lista.add(aux);
-            }
-        }
-        return lista;
+    @RolesAllowed("ADMIN")
+    public void update(Integer id, String correo, String clave, Boolean estado, Integer id_persona, Integer id_rol)
+            throws Exception {
+        Usuario u = usuarioRepository.findById(id).orElseThrow(() -> new Exception("User not found"));
+        u.setCorreo(correo);
+        if (clave != null && !clave.isEmpty())
+            u.setClave(clave);
+        u.setEstado(estado);
+        u.setId_Persona(id_persona);
+        u.setId_Rol(id_rol);
+        usuarioRepository.save(u);
     }
 }

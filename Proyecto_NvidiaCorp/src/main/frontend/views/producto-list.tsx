@@ -10,11 +10,12 @@ import Marca from 'Frontend/generated/org/proyecto/nvidiacorp/base/models/Marca'
 import CategoriaEnum from 'Frontend/generated/org/proyecto/nvidiacorp/base/models/CategoriaEnum';
 import { MarcaService } from 'Frontend/generated/endpoints';
 import { useEffect, useState } from 'react';
-import { useCarrito } from './CarritoContext';
+import { useCarrito } from './_CarritoContext';
 import "themes/default/css/producto-list.css";
 import { Upload } from '@vaadin/react-components';
 import { useNavigate } from 'react-router';
-import { ProductoEntryForm, ProductoEntryFormUpdate } from './producto-admin';
+import { ProductoEntryForm,ProductoEntryFormUpdate } from './_producto-admin';
+import { ChatEndpoint } from 'Frontend/generated/endpoints';
 
 
 function CarritoNotification({ producto, isVisible, onClose }: {
@@ -183,23 +184,63 @@ export function ProductoCard({ item, onProductoUpdated, onEliminar }: { item: an
 export default function ProductoListView() {
     const [productos, setProductos] = useState<Producto[]>([]);
     const [productosFiltrados, setProductosFiltrados] = useState<Producto[]>([]);
+    const [chatAbierto, setChatAbierto] = useState(false);
+    const [mensajeIA, setMensajeIA] = useState('');
+    const [historial, setHistorial] = useState<{ rol: string, texto: string }[]>([]);
+    const [cargandoIA, setCargandoIA] = useState(false);
     const [filtrosActivos, setFiltrosActivos] = useState<FiltrosState>({
         categorias: [],
         tiposGPU: [],
         series: []
     });
 
-    const criterio = useSignal('');
+    const { agregarAlCarrito } = useCarrito();
+    useEffect(() => {
+        if (historial.length === 0) {
+            setHistorial([
+                { rol: 'ia', texto: '¡Hola! 🤖 Soy el asistente de NvidiaCorp. Estoy aquí para asesorarte en tu compra, comparar gráficas o resolver tus dudas técnicas. ¿En qué puedo ayudarte hoy?' }
+            ]);
+        }
+    }, []);
+    const enviarMensajeIA = async (mensajePredefinido?: string) => {
+        const textoAEnviar = mensajePredefinido || mensajeIA;
+        if (!textoAEnviar.trim()) return;
+
+        const nuevoHistorial = [...historial, { rol: 'usuario', texto: textoAEnviar }];
+        setHistorial(nuevoHistorial);
+        setMensajeIA('');
+        setCargandoIA(true);
+
+        try {
+            const respuesta = await ChatEndpoint.getAsistencia(textoAEnviar);
+
+            // --- Lógica de Añadir al Carrito ---
+            if (respuesta.includes("[ADD_TO_CART:")) {
+                const match = respuesta.match(/\[ADD_TO_CART:(\d+)\]/);
+                if (match) {
+                    const id = parseInt(match[1]);
+                    const prod = productos.find(p => p.id === id);
+                    if (prod) {
+                        agregarAlCarrito(prod);
+                        Notification.show(`🛒 ${prod.nombre} añadido al carrito`, { theme: 'success', position: 'bottom-start' });
+                    }
+                }
+            }
+
+            // Limpiamos el código del texto antes de mostrarlo
+            const textoLimpio = respuesta.replace(/\[ADD_TO_CART:.*?\]/g, "").trim();
+            setHistorial(prev => [...prev, { rol: 'ia', texto: textoLimpio }]);
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setCargandoIA(false);
+        }
+    };
     const text = useSignal('');
     const navigate = useNavigate();
 
-    const itemSelect = [
-        { label: '🏷️ Nombre', value: 'nombre' },
-        { label: '💰 Precio', value: 'precio' },
-    ];
-
     const cargarProductos = async () => {
-        const data = await ProductoService.listAll();
+        const data = await ProductoService.listAllProductos();
         setProductos(data);
         setProductosFiltrados(data);
         console.log("Productos recibidos:", data);
@@ -292,15 +333,15 @@ export default function ProductoListView() {
 
     const search = async () => {
         try {
-            if (!criterio.value || !text.value) {
-                Notification.show('Por favor, selecciona un criterio e ingresa texto para buscar', {
+            if (!text.value) {
+                Notification.show('Por favor, ingresa el nombre del producto para buscar', {
                     duration: 4000,
                     position: 'top-center',
                     theme: 'error'
                 });
                 return;
             }
-            ProductoService.busqueda(criterio.value, text.value).then(function (data) {
+            ProductoService.busqueda('nombre', text.value).then(function (data) {
                 setProductos(data);
                 console.log("Resultados de busqueda:", data);
                 Notification.show(`Se encontraron ${data.length} resultado(s)`, {
@@ -565,18 +606,9 @@ export default function ProductoListView() {
                 />
 
                 <div className="producto-barra-busqueda">
-                    <Select
-                        className="producto-select"
-                        items={itemSelect}
-                        value={criterio.value}
-                        onValueChanged={(e) => (criterio.value = e.detail.value)}
-                        label="🔍 Buscar por"
-                        placeholder="Selecciona criterio..."
-                    />
-
                     <TextField
                         className="producto-busqueda-input"
-                        placeholder="¿Qué producto estas buscando? 🎯"
+                        placeholder="Ingrese el nombre del producto"
                         value={text.value}
                         onValueChanged={(evt) => (text.value = evt.detail.value)}
                         onKeyDown={handleKeyPress}
@@ -589,7 +621,7 @@ export default function ProductoListView() {
                         onClick={search}
                         theme="primary"
                         className="producto-buscar-btn"
-                        disabled={!criterio.value || !text.value}
+                        disabled={!text.value}
                     >
                         <Icon icon="vaadin:search" style={{ marginRight: '8px', fontSize: '1.1rem' }} />
                         Buscar
@@ -630,6 +662,58 @@ export default function ProductoListView() {
                             />
                         ))
                     )}
+                </div>
+                <div className={`chat-container-ia ${chatAbierto ? 'abierto' : ''}`}>
+                    {chatAbierto && (
+                        <VerticalLayout className="chat-ventana-ia">
+                            <div className="chat-header-ia">
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <Icon icon="vaadin:user-robot" style={{ color: '#76b900' }} />
+                                    <span>Asistente NvidiaCorp</span>
+                                </div>
+                                <Button theme="tertiary-inline" onClick={() => setChatAbierto(false)}>✕</Button>
+                            </div>
+
+                            <div className="chat-body-ia">
+                                {historial.map((msg, i) => (
+                                    <div key={i} className={`chat-burbuja ${msg.rol}`}>
+                                        {msg.texto}
+                                    </div>
+                                ))}
+                                {cargandoIA && <div className="chat-loading-dots">Escribiendo...</div>}
+                            </div>
+
+                            {/* CHIPS DE AYUDA RÁPIDA: Con soporte para ajuste dinámico */}
+                            <div className="chat-chips-container">
+                                <button onClick={() => enviarMensajeIA("¿Qué tarjeta me recomiendas para jugar en 4K?")}>🎮 Rec. 4K</button>
+                                <button onClick={() => enviarMensajeIA("¿Cuál es el producto más barato?")}>💰 Más barato</button>
+                                <button onClick={() => enviarMensajeIA("Explícame la transformada de Laplace")}>📐 Laplace</button>
+                                <button onClick={() => enviarMensajeIA("¿Tienen stock de la serie 5000?")}>🚀 Serie 5000</button>
+                            </div>
+
+                            <HorizontalLayout className="chat-input-area">
+                                <TextField
+                                    placeholder="Escribe aquí..."
+                                    value={mensajeIA}
+                                    onValueChanged={e => setMensajeIA(e.detail.value)}
+                                    onKeyDown={(e) => e.key === 'Enter' && enviarMensajeIA()}
+                                />
+                                <Button theme="primary" onClick={() => enviarMensajeIA()}>
+                                    <Icon icon="vaadin:paperplane" />
+                                </Button>
+                            </HorizontalLayout>
+
+                            {/* Tirador visual para indicar que se puede redimensionar */}
+                            <div className="chat-resizer-handle"></div>
+                        </VerticalLayout>
+                    )}
+
+                    <Button
+                        className="chat-toggle-btn"
+                        onClick={() => setChatAbierto(!chatAbierto)}
+                    >
+                        {chatAbierto ? <Icon icon="vaadin:close" /> : <Icon icon="vaadin:chat" />}
+                    </Button>
                 </div>
             </div>
         </div>

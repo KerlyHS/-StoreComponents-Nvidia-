@@ -1,116 +1,119 @@
 import "themes/default/css/login.css";
 import { ViewConfig } from '@vaadin/hilla-file-router/types.js';
-import { Button, ComboBox, DatePicker, Dialog, Grid, GridColumn, GridItemModel, GridSortColumn, HorizontalLayout, NumberField, Select, SelectItem, TextField, PasswordField, VerticalLayout, LoginForm, LoginOverlay } from '@vaadin/react-components';
+import { LoginOverlay } from '@vaadin/react-components';
 import { Notification } from '@vaadin/react-components/Notification';
 import { UsuarioServices } from 'Frontend/generated/endpoints';
 import { useSignal } from '@vaadin/hilla-react-signals';
-import handleError from 'Frontend/views/_ErrorHandler';
-import { Group, ViewToolbar } from 'Frontend/components/ViewToolbar';
-import { useDataProvider } from '@vaadin/hilla-react-crud';
-import { useEffect, useState } from 'react';
-import { data, replace, useNavigate, useSearchParams, useLocation } from 'react-router';
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router';
+import { useAuth } from 'Frontend/security/auth'; 
 import { isLogin } from 'Frontend/generated/UsuarioServices';
-import { useAuth } from 'Frontend/security/auth';
 
 export const config: ViewConfig = {
   skipLayouts: true,
   menu: {
-  exclude: true,
-  title: 'Login',
-  icon: 'vaadin:login',
+    exclude: true,
+    title: 'Login',
+    icon: 'vaadin:login',
   },
 };
 
-export default function LoginVista(){
-  console.log('hABER SI esta wea funciona');
+export default function LoginVista() {
   const navigate = useNavigate();
-  const location = useLocation();
-
-
+  const { login } = useAuth(); 
+  const hasError = useSignal(false);
 
   useEffect(() => {
-    isLogin().then(data =>{
-      if(data == true){
-        navigate('/');
-        console.log('Ya estas logeado');
-      }
-    })
-  },[])
+    isLogin().then(logeado => {
+      if (logeado) navigate('/'); 
+    }).catch(() => console.log("Usuario no logueado"));
+  }, []);
 
-
-
-  const dataUser = ('');
-
-  const {state, login} = useAuth();
-  const { user } = useAuth(); 
-  const[searchParams] = useSearchParams();
-  const hasError = useSignal(false);
-  const errores = searchParams.has('error');
   const i18n = {
     header: {
-      title: 'Bienvenido a NvidiaCorp',
-      description: 'Innovación y potencia para tus proyectos tecnológicos.',
-      subtitle: 'Por favor, ingresa tus credenciales para continuar.'
+      title: 'NvidiaCorp Portal',
+      description:'Solo los administradores pueden crear cuentas nuevas.', 
+      subtitle: 'Acceso exclusivo para personal autorizado.'
     },
     form: {
       title: 'Iniciar Sesión',
-      username: 'Correo Electrónico',
+      username: 'Correo Institucional',
       password: 'Contraseña',
-      submit : 'Iniciar Sesión',
-      forgotPassword: '¿Olvidaste tu contraseña?',
+      submit: 'Entrar al Sistema',
+      forgotPassword: '¿Problemas con tu acceso?',
     },
     errorMessage: {
-      title: 'Error',
+      title: 'Acceso Denegado',
       message: 'Credenciales incorrectas.',
-      username: 'El correo es requerido',
-      password: 'La contraseña es requerida'
+      username: 'El correo es obligatorio',
+      password: 'La contraseña es obligatoria'
     },
-    additionalInformation: '¿No tienes una cuenta? Contacta a soporte para registrarte.',
+    additionalInformation: '¿No tienes cuenta? Contacta a soporte.', 
   };
-useEffect(()=> {
-  UsuarioServices.createRoles().then(data =>
-    hasError.value = false
-  );
-},[]);
 
-const email = useSignal('');
-const password = useSignal('');
+  return (
+    <main className="flex justify-center items-center h-full w-full relative flex-col" style={{ position: 'relative' }}>
+      
+      {/* Botón de Inicio - esquina superior izquierda */}
+      <button
+        onClick={() => navigate('/')}
+        style={{
+          position: 'absolute',
+          top: '20px',
+          left: '20px',
+          backgroundColor: '#76b900',
+          color: '#232323',
+          border: 'none',
+          padding: '10px 20px',
+          borderRadius: '6px',
+          fontSize: '14px',
+          fontWeight: '600',
+          cursor: 'pointer',
+          zIndex: 10,
+          transition: 'background-color 0.3s ease, transform 0.2s ease',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.backgroundColor = '#9bc259';
+          e.currentTarget.style.transform = 'scale(1.05)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = '#76b900';
+          e.currentTarget.style.transform = 'scale(1)';
+        }}
+      >
+        ← Volver a Inicio
+      </button>
 
-const onLoginSuccess = () => {
-  const from = location.state?.from || '/carrito-list';
-  navigate(from, { replace: true });
-  // window.location.reload(); 
-};
-
-useEffect(() => {
-  if (location.state?.notify) {
-    Notification.show(location.state.notify, { duration: 3000, position: 'top-center', theme: 'error' });
-  }
-  // eslint-disable-next-line
-}, [location.state?.ts]);
-
-return (
-  <main className="flex justify-center items-center h-full w-full">
-    <LoginOverlay opened i18n={i18n} error={errores} noForgotPassword
-    onErrorChanged={(event)=>{
-      console.log('Error en el login', event.detail.value);
+      <LoginOverlay
+        opened
+        i18n={i18n}
+        error={hasError.value}
+        noForgotPassword
+        
+        onErrorChanged={(event) => {
           hasError.value = event.detail.value;
         }}
-    
-    onLogin={
-      async ({detail : {username, password}}) => {
-        UsuarioServices.login(username, password).then(async function (data) {
-          if(data?.success){
-            Notification.show('Bienvenido', { duration: 5000, theme: 'success' });
-            //window.location.reload();
-            navigate('/');
-          } else {
-            Notification.show('Credenciales incorrectas', { duration: 3000, theme: 'error' });
+
+        onLogin={async ({ detail: { username, password } }) => {
+          try {
+            hasError.value = false;
+            const data = await UsuarioServices.login(username, password);
+            const response = data as any;
+
+            if (response && response.success) {
+              Notification.show('¡Bienvenido!', { duration: 3000, theme: 'success' });
+              login({ name: username, roles: response.roles || [] });
+              setTimeout(() => navigate('/'), 500);
+            } else {
+              Notification.show(response?.message || 'Error al ingresar', { duration: 4000, theme: 'error' });
+              hasError.value = true;
+            }
+          } catch (error) {
+            Notification.show('Error de conexión', { duration: 4000, theme: 'error' });
             hasError.value = true;
           }
-        });
-}}
-    ></LoginOverlay>
-  </main>
-);
+        }}
+      />
+    </main>
+  );
 }

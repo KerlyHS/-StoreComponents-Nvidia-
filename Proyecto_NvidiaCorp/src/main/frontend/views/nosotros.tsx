@@ -1,13 +1,26 @@
 import { useEffect, useState } from "react";
+import { useLocation } from "react-router";
 import "themes/default/css/nosotros.css";
 
 export default function NosotrosView() {
+  const location = useLocation();
+
   useEffect(() => {
     const sections = document.querySelectorAll(".nosotros-section-anim");
     sections.forEach((sec, i) => {
       setTimeout(() => sec.classList.add("visible"), 200 + i * 200);
     });
-  }, []);
+
+    // ← NUEVO: Si viene del login, desplazarse a contacto
+    if (location.state?.scrollTo === 'contacto') {
+      setTimeout(() => {
+        const contactoSection = document.querySelector('.nosotros-contacto');
+        if (contactoSection) {
+          contactoSection.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 300);
+    }
+  }, [location.state]);
 
   return (
     <main className="nosotros-main">
@@ -89,12 +102,6 @@ export default function NosotrosView() {
             <article className="integrante-card card-anim">
               <img src="https://avatars.githubusercontent.com/u/166522885?v=4" alt="Kevin Nole - Fullstack Developer" />
               <h4>Kevin Nole</h4>
-            </article>
-          </a>
-          <a href="https://github.com/luis-blacio" target="_blank" rel="noopener noreferrer" className="integrante-link">
-            <article className="integrante-card card-anim">
-              <img src="https://avatars.githubusercontent.com/u/170284848?v=4" alt="Luis Blacio - Integración y Seguridad" />
-              <h4>Luis Blacio</h4>
             </article>
           </a>
           <a href="https://github.com/KerlyHS" target="_blank" rel="noopener noreferrer" className="integrante-link">
